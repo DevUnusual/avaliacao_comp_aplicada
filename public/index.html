@@ -30,6 +30,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            position: relative;
         }
 
         .header {
@@ -215,13 +216,178 @@
             align-items: center;
             gap: 10px;
         }
+
+        /* Tela de entrada */
+        .welcome-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .welcome-screen.hidden {
+            display: none;
+        }
+
+        .welcome-content {
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .welcome-content h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .welcome-content p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .welcome-options {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .option-card {
+            background: #f9f9f9;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .option-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .option-card h3 {
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 18px;
+        }
+
+        .option-card p {
+            color: #666;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .session-input-area {
+            display: none;
+            margin-top: 20px;
+            animation: fadeIn 0.3s;
+        }
+
+        .session-input-area.active {
+            display: block;
+        }
+
+        .session-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .session-input-group input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .session-input-group input:focus {
+            border-color: #667eea;
+        }
+
+        .error-message {
+            color: #ff4444;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        #copySessionBtn {
+            padding: 4px 8px;
+            font-size: 11px;
+            margin-left: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Tela de entrada -->
+        <div class="welcome-screen" id="welcomeScreen">
+            <div class="welcome-content">
+                <h1>🤖 Chatbot Multiusuário</h1>
+                <p>Escolha como deseja continuar</p>
+
+                <div class="welcome-options">
+                    <div class="option-card" onclick="showNewSessionOption()">
+                        <h3>➕ Nova Sessão</h3>
+                        <p>Iniciar uma conversa do zero</p>
+                    </div>
+
+                    <div class="option-card" onclick="showContinueSessionOption()">
+                        <h3>🔄 Continuar Sessão</h3>
+                        <p>Retomar uma conversa anterior usando o ID da sessão</p>
+                    </div>
+                </div>
+
+                <div class="session-input-area" id="sessionInputArea">
+                    <div class="session-input-group">
+                        <input 
+                            type="text" 
+                            id="sessionIdInput" 
+                            placeholder="Cole o ID da sessão aqui..."
+                        >
+                        <button onclick="loadExistingSession()">Conectar</button>
+                    </div>
+                    <button onclick="hideSessionInput()" style="background: #6c757d; width: 100%;">
+                        Voltar
+                    </button>
+                    <div class="error-message" id="sessionError"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interface do chat -->
         <div class="header">
             <h1>🤖 Chatbot Multiusuário</h1>
-            <div class="session-info">Sessão: <span id="sessionId">Conectando...</span></div>
+            <div class="session-info">
+                Sessão: <span id="sessionId">Conectando...</span>
+                <button id="copySessionBtn" title="Copiar ID da sessão" onclick="copySessionId()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1Z" fill="currentColor"/>
+                        <path d="M20 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H20C21.1 23 22 22.1 22 21V7C22 5.9 21.1 5 20 5ZM20 21H8V7H20V21Z" fill="currentColor"/>
+                    </svg>
+                    Copiar
+                </button>
+            </div>
         </div>
 
         <div class="status" id="status">Aguardando conexão...</div>
@@ -257,7 +423,7 @@
                 <button id="sendButton" onclick="sendMessage()" disabled>Enviar</button>
             </div>
             <div class="input-params">
-                <slider-label for="temperature">Temperatura:</slider-label>
+                <label for="temperature">Temperatura:</label>
                 <input type="range" id="temperature" name="temperature" min="0.1" max="1" step="0.1" value="0.5">
                 <h5 class="temperature-display">0.5</h5>
                 <textarea id="systemPrompt" rows="2" style="width: 100%; margin-top: 10px;" placeholder="Prompt do sistema (opcional)"></textarea>
@@ -271,7 +437,6 @@
         let temperature = 0.5;
         let systemPrompt = '';
 
-
         document.getElementById('temperature').addEventListener('input', (e) => {
             temperature = parseFloat(e.target.value);
             document.querySelector('.temperature-display').textContent = `${temperature}`;
@@ -281,9 +446,6 @@
             systemPrompt = e.target.value;
         });
 
-        // Inicializar sessão ao carregar página
-        window.addEventListener('load', createSession);
-
         // Permitir enviar com Enter
         document.getElementById('messageInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -291,6 +453,116 @@
                 sendMessage();
             }
         });
+
+        // Permitir conectar com Enter no input de sessão
+        document.getElementById('sessionIdInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                loadExistingSession();
+            }
+        });
+
+        function showNewSessionOption() {
+            createSession();
+        }
+
+        function showContinueSessionOption() {
+            document.getElementById('sessionInputArea').classList.add('active');
+            document.querySelector('.welcome-options').style.display = 'none';
+            document.getElementById('sessionIdInput').focus();
+        }
+
+        function hideSessionInput() {
+            document.getElementById('sessionInputArea').classList.remove('active');
+            document.querySelector('.welcome-options').style.display = 'flex';
+            document.getElementById('sessionIdInput').value = '';
+            document.getElementById('sessionError').classList.remove('active');
+        }
+
+        async function loadExistingSession() {
+            const input = document.getElementById('sessionIdInput');
+            const inputSessionId = input.value.trim();
+
+            if (!inputSessionId) {
+                showSessionError('Por favor, insira um ID de sessão válido.');
+                return;
+            }
+
+            try {
+                // Verificar se a sessão existe
+                const response = await fetch(`${API_URL}/session/${inputSessionId}/exists`);
+                const data = await response.json();
+
+                if (data.exists) {
+                    sessionId = inputSessionId;
+                    
+                    // Carregar histórico da sessão
+                    await loadSessionHistory();
+                    
+                    // Ocultar tela de boas-vindas
+                    document.getElementById('welcomeScreen').classList.add('hidden');
+                    
+                    // Atualizar interface
+                    document.getElementById('sessionId').textContent = sessionId.substring(0, 8) + '...';
+                    document.getElementById('messageInput').disabled = false;
+                    document.getElementById('sendButton').disabled = false;
+                    
+                    updateStatus('Sessão carregada com sucesso!', 'success');
+                    
+                    setTimeout(() => {
+                        document.getElementById('status').style.display = 'none';
+                    }, 3000);
+                } else {
+                    showSessionError('Sessão não encontrada ou expirada. Verifique o ID e tente novamente.');
+                }
+
+            } catch (error) {
+                console.error('Erro ao verificar sessão:', error);
+                showSessionError('Erro ao conectar. Verifique se o servidor está rodando.');
+            }
+        }
+
+        async function loadSessionHistory() {
+            try {
+                const response = await fetch(`${API_URL}/session/${sessionId}/history`);
+                const data = await response.json();
+
+                // Limpar área de chat
+                document.getElementById('chatArea').innerHTML = '';
+
+                // Adicionar mensagens do histórico
+                if (data.messages && data.messages.length > 0) {
+                    data.messages.forEach(msg => {
+                        const sender = msg.type === 'human' ? 'user' : 'bot';
+                        addMessage(msg.content, sender);
+                    });
+                } else {
+                    addMessage('Olá! Sou seu assistente virtual. Como posso ajudar você hoje?', 'bot');
+                }
+
+            } catch (error) {
+                console.error('Erro ao carregar histórico:', error);
+                addMessage('Olá! Sou seu assistente virtual. Como posso ajudar você hoje?', 'bot');
+            }
+        }
+
+        function showSessionError(message) {
+            const errorDiv = document.getElementById('sessionError');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('active');
+        }
+
+        async function copySessionId() {
+            if (sessionId) {
+                try {
+                    await navigator.clipboard.writeText(sessionId);
+                    alert('ID da sessão copiado para a área de transferência!');
+                } catch (err) {
+                    console.error('Erro ao copiar ID da sessão:', err);
+                    alert('Falha ao copiar o ID da sessão.');
+                }
+            }
+        }
 
         async function createSession() {
             try {
@@ -303,6 +575,9 @@
 
                 const data = await response.json();
                 sessionId = data.sessionId;
+
+                // Ocultar tela de boas-vindas
+                document.getElementById('welcomeScreen').classList.add('hidden');
 
                 document.getElementById('sessionId').textContent = sessionId.substring(0, 8) + '...';
                 document.getElementById('messageInput').disabled = false;

@@ -36,6 +36,27 @@ const prompt = ChatPromptTemplate.fromMessages([
 const chain = prompt.pipe(model);
 
 // Função para obter ou criar histórico de mensagens
+
+app.get('/api/session/:sessionId/exists', (req, res) => {
+  const { sessionId } = req.params;
+  
+  if (sessions.has(sessionId)) {
+    const session = sessions.get(sessionId);
+    res.json({
+      exists: true,
+      sessionId,
+      createdAt: session.createdAt,
+      lastActivity: session.lastActivity,
+      messageCount: session.messageHistory.messages?.length || 0,
+    });
+  } else {
+    res.json({
+      exists: false,
+      sessionId,
+    });
+  }
+});
+
 const getMessageHistory = (sessionId) => {
   if (!sessions.has(sessionId)) {
     sessions.set(sessionId, {
