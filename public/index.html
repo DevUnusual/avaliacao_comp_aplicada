@@ -503,7 +503,7 @@
                     document.getElementById('welcomeScreen').classList.add('hidden');
                     
                     // Atualizar interface
-                    document.getElementById('sessionId').textContent = sessionId.substring(0, 8) + '...';
+                    document.getElementById('sessionId').textContent = sessionId;
                     document.getElementById('messageInput').disabled = false;
                     document.getElementById('sendButton').disabled = false;
                     
@@ -553,16 +553,55 @@
         }
 
         async function copySessionId() {
-            if (sessionId) {
+            if (!sessionId) {
+                showCopyFeedback('Nenhuma sessão ativa para copiar!', false);
+                return;
+            }
+
+            // Obter o texto do ID da sessão
+            const textToCopy = sessionId;
+
+            if (navigator.clipboard && window.isSecureContext) {
                 try {
-                    await navigator.clipboard.writeText(sessionId);
-                    alert('ID da sessão copiado para a área de transferência!');
+                    await navigator.clipboard.writeText(textToCopy);
+                    showCopyFeedback('✅ ID da sessão copiado com sucesso!', true);
+                    return;
                 } catch (err) {
-                    console.error('Erro ao copiar ID da sessão:', err);
-                    alert('Falha ao copiar o ID da sessão.');
+                    console.log('Clipboard API falhou, tentando método alternativo...');
                 }
             }
+
+            try {
+                // Criar elemento input temporário
+                const tempInput = document.createElement('input');
+                tempInput.style.position = 'fixed';
+                tempInput.style.left = '-999999px';
+                tempInput.style.top = '-999999px';
+                tempInput.value = textToCopy;
+                document.body.appendChild(tempInput);
+
+                // Selecionar e copiar o texto
+                tempInput.focus();
+                tempInput.select();
+                tempInput.setSelectionRange(0, 99999); // Para dispositivos móveis
+
+                // Executar comando de cópia
+                const successful = document.execCommand('copy');
+                
+                // Remover elemento temporário
+                document.body.removeChild(tempInput);
+
+                if (successful) {
+                    showCopyFeedback('✅ ID da sessão copiado com sucesso!', true);
+                } else {
+                    throw new Error('Comando de cópia falhou');
+                }
+            } catch (err) {
+                // Estratégia 3: Fallback - mostrar o ID para o usuário copiar manualmente
+                console.error('Erro ao copiar:', err);
+            }
         }
+
 
         async function createSession() {
             try {
@@ -579,7 +618,7 @@
                 // Ocultar tela de boas-vindas
                 document.getElementById('welcomeScreen').classList.add('hidden');
 
-                document.getElementById('sessionId').textContent = sessionId.substring(0, 8) + '...';
+                document.getElementById('sessionId').textContent = sessionId;
                 document.getElementById('messageInput').disabled = false;
                 document.getElementById('sendButton').disabled = false;
                 

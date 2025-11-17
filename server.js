@@ -6,14 +6,22 @@ const { ChatOpenAI } = require('@langchain/openai');
 const { ChatPromptTemplate, MessagesPlaceholder } = require('@langchain/core/prompts');
 const { RunnableWithMessageHistory } = require('@langchain/core/runnables');
 const { ChatMessageHistory } = require('langchain/stores/message/in_memory');
+const swaggerUi = require('swagger-ui-express');
+const YAML = require('yamljs');
+const path = require('path');
+
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+const swaggerDocument = YAML.load(path.join(__dirname, 'swagger.yaml'));
 
 // Middlewares
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Armazenamento de sessões em memória
 const sessions = new Map();
@@ -324,4 +332,5 @@ app.listen(PORT, () => {
   console.log(`\n🤖 Servidor Chatbot iniciado na porta ${PORT}`);
   console.log(`📊 Status: http://localhost:${PORT}/api/status`);
   console.log(`🌐 Interface: http://localhost:${PORT}\n`);
+  console.log(`📘 Swagger UI: http://localhost:${PORT}/api-docs\n`);
 });

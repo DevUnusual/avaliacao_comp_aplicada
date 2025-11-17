@@ -1,0 +1,386 @@
+openapi: 3.0.3
+info:
+  title: Chatbot Sessions API
+  version: 1.0.0
+  description: API para gerenciamento de sessões de chat com histórico em memória.
+
+servers:
+  - url: http://localhost:3333
+    description: Servidor local de desenvolvimento
+
+paths:
+  /api/session/new:
+    post:
+      summary: Criar nova sessão
+      tags: [Sessões]
+      responses:
+        '200':
+          description: Sessão criada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NewSessionResponse'
+
+  /api/session/{sessionId}/exists:
+    get:
+      summary: Verificar se sessão existe
+      tags: [Sessões]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          description: ID da sessão
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Resultado da verificação da sessão
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionExistsResponse'
+
+  /api/chat:
+    post:
+      summary: Enviar mensagem para o chatbot
+      tags: [Chat]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: Resposta do modelo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+        '400':
+          description: Erro de validação
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Sessão não encontrada ou expirada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro ao processar mensagem
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/session/{sessionId}/history:
+    get:
+      summary: Obter histórico de mensagens da sessão
+      tags: [Sessões]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          description: ID da sessão
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Histórico da sessão
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionHistoryResponse'
+        '404':
+          description: Sessão não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro ao obter histórico
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/session/{sessionId}/clear:
+    delete:
+      summary: Limpar histórico de mensagens da sessão
+      tags: [Sessões]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          description: ID da sessão
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Histórico limpo com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClearHistoryResponse'
+        '404':
+          description: Sessão não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro ao limpar histórico
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/session/{sessionId}/config:
+    put:
+      summary: Atualizar configurações da sessão
+      tags: [Sessões]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          description: ID da sessão
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateConfigRequest'
+      responses:
+        '200':
+          description: Configurações atualizadas com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateConfigResponse'
+        '400':
+          description: Erro de validação das configurações
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Sessão não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro ao atualizar configurações
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/session/{sessionId}:
+    delete:
+      summary: Deletar sessão
+      tags: [Sessões]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          description: ID da sessão
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Sessão deletada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteSessionResponse'
+        '404':
+          description: Sessão não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/status:
+    get:
+      summary: Status do servidor
+      tags: [Status]
+      responses:
+        '200':
+          description: Informações de status do servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+
+components:
+  schemas:
+    NewSessionResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          description: ID da nova sessão
+        message:
+          type: string
+          example: Sessão criada com sucesso
+
+    SessionExistsResponse:
+      type: object
+      properties:
+        exists:
+          type: boolean
+        sessionId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastActivity:
+          type: string
+          format: date-time
+          nullable: true
+        messageCount:
+          type: integer
+          nullable: true
+
+    ChatRequest:
+      type: object
+      required:
+        - sessionId
+        - message
+      properties:
+        sessionId:
+          type: string
+          description: ID da sessão existente
+        message:
+          type: string
+          description: Mensagem do usuário
+        temperature:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 2
+          description: Temperatura do modelo para esta sessão
+        systemPrompt:
+          type: string
+          description: Novo system prompt opcional para a sessão
+
+    ChatResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        response:
+          type: string
+          description: Resposta gerada pelo modelo
+        timestamp:
+          type: string
+          format: date-time
+
+    SessionMessage:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Tipo da mensagem (human, ai, system, etc.)
+        content:
+          type: string
+          description: Conteúdo da mensagem
+
+    SessionHistoryResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        messageCount:
+          type: integer
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/SessionMessage'
+        systemPrompt:
+          type: string
+        temperature:
+          type: number
+          format: float
+        createdAt:
+          type: string
+          format: date-time
+        lastActivity:
+          type: string
+          format: date-time
+
+    ClearHistoryResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Histórico limpo com sucesso
+        sessionId:
+          type: string
+
+    UpdateConfigRequest:
+      type: object
+      properties:
+        systemPrompt:
+          type: string
+          description: Novo system prompt
+        temperature:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 2
+          description: Nova temperatura do modelo
+
+    UpdateConfigResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Configurações atualizadas com sucesso
+        sessionId:
+          type: string
+        systemPrompt:
+          type: string
+        temperature:
+          type: number
+          format: float
+
+    DeleteSessionResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Sessão deletada com sucesso
+        sessionId:
+          type: string
+
+    StatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: online
+        activeSessions:
+          type: integer
+        uptime:
+          type: number
+          format: float
+          description: Tempo de atividade do processo em segundos
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Mensagem de erro
+        details:
+          type: string
+          description: Detalhes adicionais do erro
+          nullable: true
