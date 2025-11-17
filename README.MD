@@ -66,7 +66,7 @@ Aplicação de chat multiusuário construída em Node.js com Express, LangChain 
     "temperature": 0.7,
     "systemPrompt": "Você é um assistente educado."
   }
-````
+
 
 * `GET /api/session/:sessionId/history`
   Retorna o histórico de mensagens da sessão.
