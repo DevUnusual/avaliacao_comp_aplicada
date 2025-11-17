@@ -133,7 +133,7 @@ Principais características:
 1. Clone o repositório ou copie os arquivos do projeto:
 
    ```bash
-   git clone [url-do-repositorio](https://github.com/DevUnusual/avaliacao_comp_aplicada.git)
+   git clone https://github.com/DevUnusual/avaliacao_comp_aplicada.git
    cd avaliacao_comp_aplicada
    ```
 
