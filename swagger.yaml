@@ -264,8 +264,8 @@ components:
         temperature:
           type: number
           format: float
-          minimum: 0
-          maximum: 2
+          minimum: 0.1
+          maximum: 1
           description: Temperatura do modelo para esta sessão
         systemPrompt:
           type: string
@@ -334,8 +334,8 @@ components:
         temperature:
           type: number
           format: float
-          minimum: 0
-          maximum: 2
+          minimum: 0.1
+          maximum: 1
           description: Nova temperatura do modelo
 
     UpdateConfigResponse:

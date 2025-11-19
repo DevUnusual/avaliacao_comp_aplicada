@@ -10,11 +10,8 @@ const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
 const path = require('path');
 
-
-
 const app = express();
-const PORT = process.env.PORT || 3000;
-
+const PORT = process.env.PORT || 3333;
 const swaggerDocument = YAML.load(path.join(__dirname, 'swagger.yaml'));
 
 // Middlewares
@@ -31,9 +28,10 @@ const model = new ChatOpenAI({
   modelName: 'gpt-4.1-nano',
   temperature: 0.5,
   openAIApiKey: process.env.OPENAI_API_KEY,
+  maxTokens: 2000,
 });
 
-// Template do prompt com system_prompt variável
+// Template do prompt
 const prompt = ChatPromptTemplate.fromMessages([
   ['system', '{system_prompt}'],
   new MessagesPlaceholder('chat_history'),
@@ -43,8 +41,12 @@ const prompt = ChatPromptTemplate.fromMessages([
 // Criar chain com histórico
 const chain = prompt.pipe(model);
 
-// Função para obter ou criar histórico de mensagens
 
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
+});
+
+//funcao para o historico
 app.get('/api/session/:sessionId/exists', (req, res) => {
   const { sessionId } = req.params;
   
@@ -152,8 +154,8 @@ app.post('/api/chat', async (req, res) => {
     const session = sessions.get(sessionId);
 
     // Atualizar system prompt se fornecido
-    if (systemPrompt && systemPrompt.trim() !== '') {
-      session.systemPrompt = systemPrompt;
+    if (systemPrompt !== undefined) {
+      session.systemPrompt = systemPrompt.trim() || 'Você é um assistente útil e prestativo.';
     }
 
     // Atualizar temperature se fornecida
@@ -180,7 +182,7 @@ app.post('/api/chat', async (req, res) => {
         runnable: customChain,
         getMessageHistory,
         inputMessagesKey: 'input',
-        historyMessagesKey: 'chat_history',
+        historyMessagesKey: 'chat_history'
       });
     }
 
@@ -328,9 +330,22 @@ app.get('/api/status', (req, res) => {
 });
 
 // Iniciar servidor
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
+  const ifaces = require('os').networkInterfaces();
+  let localIP = 'localhost';
+  
+  // Encontrar IP local
+  Object.keys(ifaces).forEach(ifname => {
+    ifaces[ifname].forEach(iface => {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        localIP = iface.address;
+      }
+    });
+  });
+  
   console.log(`\n🤖 Servidor Chatbot iniciado na porta ${PORT}`);
+  console.log(`📍 Acesso local: http://localhost:${PORT}`);
+  console.log(`🌐 Acesso rede: http://${localIP}:${PORT}`);
   console.log(`📊 Status: http://localhost:${PORT}/api/status`);
-  console.log(`🌐 Interface: http://localhost:${PORT}\n`);
-  console.log(`📘 Swagger UI: http://localhost:${PORT}/api-docs\n`);
+  console.log(`📘 Swagger UI: http://localhost:${PORT}/api-docs`);
 });

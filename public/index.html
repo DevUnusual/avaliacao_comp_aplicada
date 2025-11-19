@@ -431,8 +431,9 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
-        const API_URL = 'http://localhost:3333/api';
+        const API_URL = '/api';
         let sessionId = null;
         let temperature = 0.5;
         let systemPrompt = '';
@@ -503,7 +504,7 @@
                     document.getElementById('welcomeScreen').classList.add('hidden');
                     
                     // Atualizar interface
-                    document.getElementById('sessionId').textContent = sessionId;
+                    document.getElementById('sessionId').textContent = sessionId.substring(0, 8) + '...';
                     document.getElementById('messageInput').disabled = false;
                     document.getElementById('sendButton').disabled = false;
                     
@@ -572,7 +573,7 @@
             }
 
             try {
-                // Criar elemento input temporário
+                // input temporario para copiar
                 const tempInput = document.createElement('input');
                 tempInput.style.position = 'fixed';
                 tempInput.style.left = '-999999px';
@@ -597,11 +598,9 @@
                     throw new Error('Comando de cópia falhou');
                 }
             } catch (err) {
-                // Estratégia 3: Fallback - mostrar o ID para o usuário copiar manualmente
                 console.error('Erro ao copiar:', err);
             }
         }
-
 
         async function createSession() {
             try {
@@ -614,11 +613,12 @@
 
                 const data = await response.json();
                 sessionId = data.sessionId;
+		        console.log('data create session: ', data);
 
                 // Ocultar tela de boas-vindas
                 document.getElementById('welcomeScreen').classList.add('hidden');
 
-                document.getElementById('sessionId').textContent = sessionId;
+                document.getElementById('sessionId').textContent = sessionId.substring(0, 8) + '...';
                 document.getElementById('messageInput').disabled = false;
                 document.getElementById('sendButton').disabled = false;
                 
@@ -680,7 +680,7 @@
             
             const contentDiv = document.createElement('div');
             contentDiv.className = 'message-content';
-            contentDiv.textContent = text;
+            contentDiv.innerHTML = marked.parse(text);
             
             messageDiv.appendChild(contentDiv);
             chatArea.appendChild(messageDiv);
